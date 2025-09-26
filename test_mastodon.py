@@ -1,8 +1,9 @@
 from mastodon import Mastodon
+import os
 
 mastodon = Mastodon(
-    access_token="SkRBTtrjicN1-imUK-dTgLKm5b7j5N1RXaHugvvc5m4",
-    api_base_url="https://mastodon.social"
+    access_token=os.getenv("ACCESS_TOKEN"),
+    api_base_url=os.getenv("INSTANCE_URL")
 )
 
 timeline = mastodon.timeline_public(limit=3)

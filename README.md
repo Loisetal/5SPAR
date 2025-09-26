@@ -1,10 +1,18 @@
-# Tester connexion mastodon
+
+# 5SPAR - Projet
+Loise Talluau & Mathieu
+
+## Set up
+Création d'un environnement virtuel, installation des librairies et déploiement du docker.
+
+
+# Test connexion mastodon
 ```bash
 python test_mastodon.py
 ```
 
-- **Objectif** : vérifier que ton token et ton instance fonctionnent.
-- **Résultat attendu** : tu devrais voir quelques toots récents s’afficher dans le terminal.
+- **Objectif** : Vérification Token + instance .
+- **Résultat attendu** : Affichage de toots.
 
 # Tester kafka
 ```bash
