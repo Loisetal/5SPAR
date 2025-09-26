@@ -45,8 +45,8 @@ services:
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     volumes:
-       - "D:/SupInfo_M2/3-5SPAR/4-Projet/src:/home/jovyan/src"
-       - "D:/SupInfo_M2/3-5SPAR/4-Projet/notebooks:/home/jovyan/notebooks"
+       - "./src:/home/jovyan/src"
+       - "./notebooks:/home/jovyan/notebooks"
     depends_on:
       - kafka
       - postgres

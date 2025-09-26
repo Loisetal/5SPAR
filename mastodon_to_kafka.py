@@ -1,12 +1,13 @@
 import json
 import re
 import time
+import os
 from mastodon import Mastodon, StreamListener
 from confluent_kafka import Producer
 
 # Config Mastodon
-INSTANCE_URL = "https://mastodon.social"
-ACCESS_TOKEN = "SkRBTtrjicN1-imUK-dTgLKm5b7j5N1RXaHugvvc5m4"
+INSTANCE_URL = os.getenv("INSTANCE_URL")
+ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 
 # Config Kafka
 KAFKA_BOOTSTRAP = "localhost:9092"
