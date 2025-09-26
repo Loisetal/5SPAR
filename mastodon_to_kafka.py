@@ -5,11 +5,11 @@ from mastodon import Mastodon, StreamListener
 from confluent_kafka import Producer
 
 # Config Mastodon
-INSTANCE_URL = "https://mastodon.social"  # Remplace par ton instance
+INSTANCE_URL = "https://mastodon.social"
 ACCESS_TOKEN = "SkRBTtrjicN1-imUK-dTgLKm5b7j5N1RXaHugvvc5m4"
 
 # Config Kafka
-KAFKA_BOOTSTRAP = "localhost:9092"  # Depuis ton host Windows
+KAFKA_BOOTSTRAP = "localhost:9092"
 KAFKA_TOPIC = "mastodon_stream"
 
 # Hashtags à filtrer
@@ -55,9 +55,8 @@ class MyListener(StreamListener):
 
     def on_error(self, status_code):
         print("Stream error:", status_code)
-        return True  # continue
+        return True
 
-# Main
 if __name__ == "__main__":
     mastodon = Mastodon(access_token=ACCESS_TOKEN, api_base_url=INSTANCE_URL)
     listener = MyListener()

@@ -2,13 +2,7 @@ FROM jupyter/pyspark-notebook:latest
 
 USER root
 
-# Installer les dépendances Python nécessaires
-RUN pip install --no-cache-dir \
-    mastodon.py \
-    kafka-python \
-    psycopg2-binary \
-    matplotlib \
-    seaborn \
-    pandas
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 USER jovyan
