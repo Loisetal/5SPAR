@@ -16,7 +16,7 @@ services:
     ports:
       - "9092:9092"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ADVERTISED_HOST_NAME: localhost
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_CREATE_TOPICS: "mastodon_stream:1:1"
     depends_on:
@@ -31,7 +31,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: mastodon_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -45,8 +45,8 @@ services:
     environment:
       JUPYTER_ENABLE_LAB: "yes"
     volumes:
-      - ./src:/home/jovyan/src
-      - ./notebooks:/home/jovyan/notebooks
+       - "D:/SupInfo_M2/3-5SPAR/4-Projet/src:/home/jovyan/src"
+       - "D:/SupInfo_M2/3-5SPAR/4-Projet/notebooks:/home/jovyan/notebooks"
     depends_on:
       - kafka
       - postgres
