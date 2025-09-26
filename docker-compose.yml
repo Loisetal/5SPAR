@@ -25,13 +25,13 @@ services:
   # PostgreSQL
   postgres:
     image: postgres:15
-    container_name: postgres
+    container_name: mastodon_db
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: mastodon_db
+      POSTGRES_USER: mastodon_user
+      POSTGRES_PASSWORD: mastodon
+      POSTGRES_DB: mastodon
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
