@@ -1,0 +1,20 @@
+# Mastodon API
+Mastodon.py==2.1.4
+
+# Kafka
+kafka-python==2.0.2
+
+# PostgreSQL
+psycopg2-binary==2.9.9
+
+# Spark
+pyspark==3.5.0
+
+# Analyse et visualisation de données
+pandas==2.1.1
+numpy==1.26.0
+matplotlib==3.8.0
+seaborn==0.13.2
+
+# NLP / Prétraitement texte pour sentiment analysis
+scikit-learn==1.4.2
