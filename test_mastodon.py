@@ -1,5 +1,8 @@
 from mastodon import Mastodon
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 mastodon = Mastodon(
     access_token=os.getenv("ACCESS_TOKEN"),

@@ -4,6 +4,9 @@ import time
 import os
 from mastodon import Mastodon, StreamListener
 from confluent_kafka import Producer
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Config Mastodon
 INSTANCE_URL = os.getenv("INSTANCE_URL")
