@@ -1,6 +1,7 @@
-from pyspark.sql.functions import from_json, col, window, length
+from pyspark.sql.functions import from_json, col, window, length, explode
 from common.spark_utils import get_spark_session, write_to_postgres
 from common.schema import toot_schema
+from functools import reduce
 
 # Création de la session Spark avec option spéciale Windows (--add-opens)
 spark = get_spark_session("MastodonStreamProcessor")
@@ -18,8 +19,12 @@ df_parsed = df_raw.selectExpr("CAST(value AS STRING)") \
     .select(from_json(col("value"), toot_schema).alias("data")) \
     .select("data.*")
 
-# Transformation 1 : filtrer par langue (ex: anglais uniquement)
-df_filtered = df_parsed.filter(col("language") == "en")
+# Transformation 1 : filtrer par langue et mots-clés (ex: anglais uniquement)
+keywords = ["Spark", "Mastodon", "Data"]
+df_filtered = df_parsed.filter(
+    (col("language") == "en") &
+    reduce(lambda a, b: a | b, [col("text").contains(k) for k in keywords])
+)
 
 # Transformation 2 : ajouter une fenêtre temporelle (par minute)
 df_with_time = df_filtered \
@@ -31,9 +36,18 @@ toot_counts = df_with_time.groupBy(window(col("timestamp"), "1 minute")).count()
     .withColumn("window_end", col("window").end) \
     .drop("window")
 
-# Action 2 : calculer la longueur moyenne des toots
-avg_length = df_with_time.withColumn("toot_length", length(col("text"))) \
-    .groupBy(window(col("timestamp"), "1 minute")).avg("toot_length") \
+# Action 2 : longueur moyenne des toots par utilisateur
+avg_length_user = df_with_time.withColumn("toot_length", length(col("text"))) \
+    .groupBy("user_id", window(col("timestamp"), "1 minute")) \
+    .avg("toot_length") \
+    .withColumn("window_start", col("window").start) \
+    .withColumn("window_end", col("window").end) \
+    .drop("window")
+
+# Action 3 : hashtags les plus populaires par fenêtre
+df_hashtags = df_with_time.withColumn("hashtag", explode(col("hashtags")))
+top_hashtags = df_hashtags.groupBy("hashtag", window(col("timestamp"), "1 minute")) \
+    .count() \
     .withColumn("window_start", col("window").start) \
     .withColumn("window_end", col("window").end) \
     .drop("window")
@@ -51,17 +65,24 @@ def write_to_postgres(df, table_name):
       .save()
 
 # Démarrage des streams
+query_raw = df_with_time.writeStream.foreachBatch(
+    lambda df, epoch_id: write_to_postgres(df, "public.toots")
+).outputMode("append").start()
+
 query_counts = toot_counts.writeStream.foreachBatch(
     lambda df, epoch_id: write_to_postgres(df, "public.toot_counts")
 ).outputMode("update").start()
 
-query_avg = avg_length.writeStream.foreachBatch(
-    lambda df, epoch_id: write_to_postgres(df, "public.avg_toot_length")
+query_avg = avg_length_user.writeStream.foreachBatch(
+    lambda df, epoch_id: write_to_postgres(df, "public.avg_toot_length_user")
 ).outputMode("update").start()
 
-query_counts.awaitTermination()
-query_avg.awaitTermination()
+query_tags = top_hashtags.writeStream.foreachBatch(
+    lambda df, epoch_id: write_to_postgres(df, "public.top_hashtags")
+).outputMode("update").start()
 
+for query in [query_raw, query_counts, query_avg, query_tags]:
+    query.awaitTermination()
 
 """
 💡 Pour lancer ce script sous Windows avec spark-submit (et éviter l'erreur getSubject) :
