@@ -28,7 +28,7 @@ schema = StructType([
 # Lecture du stream depuis Kafka
 df_raw = spark.readStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "localhost:9092") \
+    .option("kafka.bootstrap.servers", "kafka:9092") \
     .option("subscribe", "mastodon_stream") \
     .option("startingOffsets", "latest") \
     .load()
@@ -50,25 +50,41 @@ toot_counts = df_with_time.groupBy(
     window(col("timestamp"), "1 minute")
 ).count()
 
+toot_counts_clean = toot_counts \
+    .withColumn("window_start", col("window").start) \
+    .withColumn("window_end", col("window").end) \
+    .drop("window")
+
 # Action 2 : calculer la longueur moyenne des toots
 avg_length = df_with_time.withColumn("toot_length", length(col("text"))) \
     .groupBy(window(col("timestamp"), "1 minute")) \
     .avg("toot_length")
 
+avg_length_clean = avg_length \
+    .withColumn("window_start", col("window").start) \
+    .withColumn("window_end", col("window").end) \
+    .drop("window")
+
 # Sauvegarde des résultats dans PostgreSQL
-def write_to_postgres(df, epoch_id):
+def write_to_postgres(df, epoch_id, table_name):
     df.write \
       .format("jdbc") \
-      .option("url", "jdbc:postgresql://localhost:5433/mastodon") \
-      .option("dbtable", "public.toot_stats") \
+      .option("url", "jdbc:postgresql://mastodon_db:5432/mastodon") \
+      .option("dbtable", table_name) \
       .option("user", "mastodon_user") \
       .option("password", "mastodon") \
+      .option("driver", "org.postgresql.Driver") \
       .mode("append") \
       .save()
 
 # Démarrage des streams
-query_counts = toot_counts.writeStream.foreachBatch(write_to_postgres).outputMode("update").start()
-query_avg = avg_length.writeStream.foreachBatch(write_to_postgres).outputMode("update").start()
+query_counts = toot_counts_clean.writeStream.foreachBatch(
+    lambda df, epoch_id: write_to_postgres(df, epoch_id, "public.toot_counts")
+).outputMode("update").start()
+
+query_avg = avg_length_clean.writeStream.foreachBatch(
+    lambda df, epoch_id: write_to_postgres(df, epoch_id, "public.avg_toot_length")
+).outputMode("update").start()
 
 query_counts.awaitTermination()
 query_avg.awaitTermination()

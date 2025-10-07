@@ -16,7 +16,7 @@ services:
     ports:
       - "9092:9092"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_CREATE_TOPICS: "mastodon_stream:1:1"
     depends_on:
@@ -44,9 +44,10 @@ services:
       - "4040-4045:4040-4045" # Spark UI
     environment:
       JUPYTER_ENABLE_LAB: "yes"
+      PYSPARK_SUBMIT_ARGS: "--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0 pyspark-shell"
     volumes:
-       - "./src:/home/jovyan/src"
-       - "./notebooks:/home/jovyan/notebooks"
+      - "./scripts:/home/jovyan/scripts"
+      - "./notebooks:/home/jovyan/notebooks"
     depends_on:
       - kafka
       - postgres

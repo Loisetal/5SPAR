@@ -1,4 +1,5 @@
 venv/
+venv_linux/
 .env
 __pycache__/
 mastodon_credentials.json
