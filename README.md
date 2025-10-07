@@ -5,10 +5,15 @@ Loise Talluau & Mathieu
 ## Set up
 Création d'un environnement virtuel, installation des librairies et déploiement du docker.
 
+### Lancer docker
+```bash
+docker compose up -d
+```
+
 ## Tests connexions
 ### Test connexion mastodon
 ```bash
-python test_mastodon.py
+python scripts/test_mastodon.py
 ```
 
 - **Objectif** : Vérification Token + instance .
@@ -44,3 +49,12 @@ docker exec -it kafka kafka-console-consumer.sh --bootstrap-server kafka:9092 --
 - **Objectif** : voir les messages envoyés par ton script Python.
 - **Résultat attendu** : plusieurs messages JSON correspondant aux toots
 
+```bash
+wsl -d Ubuntu -u root  
+sudo apt install python3-venv -y
+python3 -m venv venv_linux
+source venv_linux/bin/activate
+pip install -r requirements.txt 
+docker-compose exec spark pip install pyspark==3.5.1
+docker-compose exec spark python /home/jovyan/scripts/spark_streaming.py
+```
