@@ -1,29 +1,9 @@
-from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, window, length
-from pyspark.sql.types import StructType, StructField, StringType, ArrayType, IntegerType
+from common.spark_utils import get_spark_session, write_to_postgres
+from common.schema import toot_schema
 
 # Création de la session Spark avec option spéciale Windows (--add-opens)
-spark = SparkSession.builder \
-    .appName("MastodonStreamProcessor") \
-    .config("spark.driver.extraJavaOptions", "--add-opens=java.base/javax.security.auth=ALL-UNNAMED") \
-    .getOrCreate()
-
-spark.sparkContext.setLogLevel("WARN")
-
-# Définition du schéma attendu pour les toots
-schema = StructType([
-    StructField("toot_id", StringType(), True),
-    StructField("user_id", StringType(), True),
-    StructField("username", StringType(), True),
-    StructField("created_at", StringType(), True),   # parsé ensuite en timestamp
-    StructField("text", StringType(), True),
-    StructField("hashtags", ArrayType(StringType()), True),
-    StructField("language", StringType(), True),
-    StructField("favourites_count", IntegerType(), True),
-    StructField("reblogs_count", IntegerType(), True),
-    StructField("reply_to_id", StringType(), True),
-    StructField("url", StringType(), True),
-])
+spark = get_spark_session("MastodonStreamProcessor")
 
 # Lecture du stream depuis Kafka
 df_raw = spark.readStream \
@@ -35,7 +15,7 @@ df_raw = spark.readStream \
 
 # Conversion du JSON en colonnes structurées
 df_parsed = df_raw.selectExpr("CAST(value AS STRING)") \
-    .select(from_json(col("value"), schema).alias("data")) \
+    .select(from_json(col("value"), toot_schema).alias("data")) \
     .select("data.*")
 
 # Transformation 1 : filtrer par langue (ex: anglais uniquement)
@@ -46,27 +26,20 @@ df_with_time = df_filtered \
     .withColumn("timestamp", col("created_at").cast("timestamp"))
 
 # Action 1 : compter le nombre de toots par minute
-toot_counts = df_with_time.groupBy(
-    window(col("timestamp"), "1 minute")
-).count()
-
-toot_counts_clean = toot_counts \
+toot_counts = df_with_time.groupBy(window(col("timestamp"), "1 minute")).count() \
     .withColumn("window_start", col("window").start) \
     .withColumn("window_end", col("window").end) \
     .drop("window")
 
 # Action 2 : calculer la longueur moyenne des toots
 avg_length = df_with_time.withColumn("toot_length", length(col("text"))) \
-    .groupBy(window(col("timestamp"), "1 minute")) \
-    .avg("toot_length")
-
-avg_length_clean = avg_length \
+    .groupBy(window(col("timestamp"), "1 minute")).avg("toot_length") \
     .withColumn("window_start", col("window").start) \
     .withColumn("window_end", col("window").end) \
     .drop("window")
 
 # Sauvegarde des résultats dans PostgreSQL
-def write_to_postgres(df, epoch_id, table_name):
+def write_to_postgres(df, table_name):
     df.write \
       .format("jdbc") \
       .option("url", "jdbc:postgresql://mastodon_db:5432/mastodon") \
@@ -78,12 +51,12 @@ def write_to_postgres(df, epoch_id, table_name):
       .save()
 
 # Démarrage des streams
-query_counts = toot_counts_clean.writeStream.foreachBatch(
-    lambda df, epoch_id: write_to_postgres(df, epoch_id, "public.toot_counts")
+query_counts = toot_counts.writeStream.foreachBatch(
+    lambda df, epoch_id: write_to_postgres(df, "public.toot_counts")
 ).outputMode("update").start()
 
-query_avg = avg_length_clean.writeStream.foreachBatch(
-    lambda df, epoch_id: write_to_postgres(df, epoch_id, "public.avg_toot_length")
+query_avg = avg_length.writeStream.foreachBatch(
+    lambda df, epoch_id: write_to_postgres(df, "public.avg_toot_length")
 ).outputMode("update").start()
 
 query_counts.awaitTermination()
