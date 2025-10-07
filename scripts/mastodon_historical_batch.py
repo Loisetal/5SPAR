@@ -1,23 +1,17 @@
 from pyspark.sql import Row
-from pyspark.sql.functions import col, length, to_date, explode, count, avg, desc, row_number, hour, lit
+from pyspark.sql.functions import col, length, to_date, explode, count, avg, desc, row_number, hour
 from pyspark.sql.window import Window
 from datetime import datetime, timedelta
-from common.spark_utils import get_spark_session, write_to_postgres
+from common.spark_utils import get_spark_session, write_to_postgres, read_from_postgres
 from common.schema import toot_schema
+from common.config import config
 import random
 
 # Créer la session Spark
 spark = get_spark_session("MastodonBatchProcessor")
 
 # Lire les tables issues du streaming
-df_toots = spark.read \
-    .format("jdbc") \
-    .option("url", "jdbc:postgresql://mastodon_db:5432/mastodon") \
-    .option("dbtable", "public.toots") \
-    .option("user", "mastodon_user") \
-    .option("password", "mastodon") \
-    .option("driver", "org.postgresql.Driver") \
-    .load()
+df_toots = read_from_postgres(spark, "public.toots")
 
 # Vérifier si la table est vide et peupler avec des données de test
 if df_toots.rdd.isEmpty():
@@ -26,7 +20,7 @@ if df_toots.rdd.isEmpty():
     hashtags_list = [["spark", "data"], ["mastodon"], ["test", "spark"]]
     base_time = datetime.now() - timedelta(days=5)
     rows = []
-    for i in range(30):
+    for i in range(config.BATCH_SIZE):
         user = random.choice(users)
         hashtags = random.choice(hashtags_list)
         text = f"Test toot {i} from {user}"
@@ -58,7 +52,7 @@ df_toots = df_toots.withColumn("date", to_date(col("timestamp")))
 df_toots.cache()
 
 # Filtrer utilisateurs actifs (plus de X toots)
-X = 1
+X = config.ACTIVE_USER_THRESHOLD
 active_users = df_toots.groupBy("user_id").agg(count("*").alias("toot_count")) \
     .filter(col("toot_count") > X) \
     .select("user_id")
@@ -89,7 +83,7 @@ top_hashtags = df_hashtags.groupBy("date","hashtag").agg(count("*").alias("count
 total_toots_hashtag = df_hashtags.groupBy("hashtag").agg(count("*").alias("total_count"))
 
 # Toots par heure
-toots_per_hour = df_active.withColumn("hour", hour(col("created_at"))) \
+toots_per_hour = df_active.withColumn("hour", hour(col("timestamp"))) \
     .groupBy("date","hour").agg(count("*").alias("toots_per_hour"))
 
 # Optimisations Spark
