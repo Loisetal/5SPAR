@@ -12,5 +12,5 @@ toot_schema = StructType([
     StructField("favourites_count", IntegerType(), True),
     StructField("reblogs_count", IntegerType(), True),
     StructField("reply_to_id", StringType(), True),
-    StructField("url", StringType(), True),
+    StructField("url", StringType(), True)
 ])
