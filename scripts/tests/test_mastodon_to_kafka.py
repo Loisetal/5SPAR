@@ -13,7 +13,7 @@ INSTANCE_URL = os.getenv("INSTANCE_URL")
 ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 
 # Config Kafka
-KAFKA_BOOTSTRAP = "localhost:9092"
+KAFKA_BOOTSTRAP = "kafka:9092"
 KAFKA_TOPIC = "mastodon_stream"
 
 # Hashtags à filtrer
