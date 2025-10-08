@@ -5,12 +5,44 @@ Loise Talluau & Mathieu
 ## Set up
 Création d'un environnement virtuel, installation des librairies et déploiement du docker.
 
-### Lancer docker
+### Crée et active un environnement virtuel Python, puis installe les dépendances 
+```bash
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Lancer les conteneurs docker
 ```bash
 docker compose up -d
 ```
+## Exécuter le producteur Mastodon → Kafka
+Ouvre un terminal et exécute le script mastodon_producer.py pour collecter les toots Mastodon et les envoyer à Kafka
+```bash
+docker exec -it spark bash
 
-## Tests connexions
+pip install pyspark
+pip install Mastodon.py confluent-kafka python-dotenv
+
+python mastodon_producer.py
+```
+
+## Exécuter le streaming Kafka → Spark → PostgreSQL
+Ouvre un nouveau terminal et exécute le script spark_streaming.py pour lire en continu les messages du topic Kafka mastodon_stream, appliquer des transformations et enregistrer les résultats dans PostgreSQL.
+```bash
+docker exec -it spark bash
+
+spark-submit   --conf "spark.driver.extraJavaOptions=--add-opens=java.base/javax.security.auth=ALL-UNNAMED"   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0   /home/jovyan/scripts/spark_streaming.py
+```
+## Exécuter le batch historique Mastodon
+Ouvre un terminal et exécute le script mastodon_historical_batchg.py
+```bash
+docker exec -it spark bash
+
+spark-submit   --conf "spark.driver.extraJavaOptions=--add-opens=java.base/javax.security.auth=ALL-UNNAMED"   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0   /home/jovyan/scripts/mastodon_historical_batch.py
+```
+
+## Tests 
 ### Test connexion mastodon
 ```bash
 python scripts/tests/test_mastodon.py
@@ -50,27 +82,3 @@ docker exec -it kafka kafka-console-consumer.sh --bootstrap-server kafka:9092 --
 
 - **Objectif** : voir les messages envoyés par ton script Python.
 - **Résultat attendu** : plusieurs messages JSON correspondant aux toots
-
-```bash
-wsl -d Ubuntu
-sudo apt install python3-venv -y
-python3 -m venv venv_linux
-source venv_linux/bin/activate
-pip install -r requirements.txt 
-
-docker exec -it spark bash
-pip install pyspark
-
-spark-submit   --conf "spark.driver.extraJavaOptions=--add-opens=java.base/javax.security.auth=ALL-UNNAMED"   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0   /home/jovyan/scripts/spark_streaming.py
-
-spark-submit   --conf "spark.driver.extraJavaOptions=--add-opens=java.base/javax.security.auth=ALL-UNNAMED"   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0   /home/jovyan/scripts/mastodon_historical_batch.py
-```
-
-
-docker exec -it spark bash
-
-pip install Mastodon.py confluent-kafka python-dotenv
-
-
-
-
