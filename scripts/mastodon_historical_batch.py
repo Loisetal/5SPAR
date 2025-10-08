@@ -10,7 +10,7 @@ import random
 # Créer la session Spark
 spark = get_spark_session("MastodonBatchProcessor")
 
-# Lire les tables issues du streaming
+# Lecture des données de la table `toots` issue du streaming
 df_toots = read_from_postgres(spark, "public.toots")
 
 # Vérifier si la table est vide et peupler avec des données de test
@@ -25,6 +25,7 @@ if df_toots.rdd.isEmpty():
         hashtags = random.choice(hashtags_list)
         text = f"Test toot {i} from {user}"
         created_at = (base_time + timedelta(hours=i)).isoformat()
+        # Création d'une ligne correspondant au schéma `toot_schema`
         rows.append(Row(
             toot_id=f"t{i}",
             user_id=user,
@@ -38,6 +39,7 @@ if df_toots.rdd.isEmpty():
             reply_to_id=None,
             url=f"http://example.com/t{i}"
         ))
+    # Création du DataFrame Spark et insertion dans PostgreSQL
     df_test = spark.createDataFrame(rows, schema=toot_schema)
     write_to_postgres(df_test, "public.toots", mode="overwrite")
     df_toots = df_test
@@ -51,7 +53,7 @@ df_toots = df_toots.withColumn("date", to_date(col("timestamp")))
 # Cache pour optimiser les calculs multiples
 df_toots.cache()
 
-# Filtrer utilisateurs actifs (plus de X toots)
+# Filtrer utilisateurs actifs (ayant plus de X toots)
 X = config.ACTIVE_USER_THRESHOLD
 active_users = df_toots.groupBy("user_id").agg(count("*").alias("toot_count")) \
     .filter(col("toot_count") > X) \
@@ -94,25 +96,6 @@ top_hashtags = top_hashtags.coalesce(2)
 avg_length_user = avg_length_user.coalesce(2)
 total_toots_hashtag = total_toots_hashtag.coalesce(2)
 toots_per_hour = toots_per_hour.coalesce(2)
-
-# Affichage pour vérification
-print("=== Toots per day ===")
-toots_per_day.show(5)
-
-print("=== Avg toot length per day ===")
-avg_toot_length.show(5)
-
-print("=== Avg toot length per user ===")
-avg_length_user.show(5)
-
-print("=== Top hashtags per day ===")
-top_hashtags.show(5)
-
-print("=== Total toots per hashtag ===")
-total_toots_hashtag.show(5)
-
-print("=== Toots per hour ===")
-toots_per_hour.show(5)
 
 # Sauvegarde dans PostgreSQL
 write_to_postgres(toots_per_day, "public.toots_per_day", mode="overwrite")
