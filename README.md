@@ -53,7 +53,7 @@ spark-submit   --conf "spark.driver.extraJavaOptions=--add-opens=java.base/javax
 Avec un outil comme DBeaver, consultez les données stockées
 
 ## Analyse des sentiments et Data Viz
-Sur rendre sur le notebook et executer les cellules
+Se rendre sur le notebook et executer les cellules
 
 
 
