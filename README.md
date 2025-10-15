@@ -16,8 +16,12 @@ pip install -r requirements.txt
 ```bash
 docker compose up -d
 ```
+
+S'assurer de la bonne execution des containers dans Docker Desktop, au besoin relancer manuellement (Kafka)
+
 ## Exécuter le producteur Mastodon → Kafka
-Ouvre un terminal et exécute le script mastodon_producer.py pour collecter les toots Mastodon et les envoyer à Kafka
+### Ouvrir deux terminaux en parallèle
+Ouvrir un terminal et exécuter le script mastodon_producer.py pour collecter les toots Mastodon et les envoyer à Kafka
 ```bash
 docker exec -it spark bash
 
@@ -48,7 +52,12 @@ spark-submit   --conf "spark.driver.extraJavaOptions=--add-opens=java.base/javax
 
 
 
-## Tests 
+
+
+
+
+
+## Tests (tests ayant été réalisés avant la partie expliquée au-dessus. Plus vraiment d'intéret aujourd'hui)
 ### Test connexion mastodon
 ```bash
 python scripts/tests/test_mastodon.py
