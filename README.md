@@ -12,6 +12,8 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### Créer un fichier .env et le remplir à partir du .env.example
+
 ### Lancer les conteneurs docker
 ```bash
 docker compose up -d
@@ -47,7 +49,11 @@ docker exec -it spark bash
 spark-submit   --conf "spark.driver.extraJavaOptions=--add-opens=java.base/javax.security.auth=ALL-UNNAMED"   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0   /home/jovyan/scripts/mastodon_historical_batch.py
 ```
 
+## Base de données
+Avec un outil comme DBeaver, consultez les données stockées
 
+## Analyse des sentiments et Data Viz
+Sur rendre sur le notebook et executer les cellules
 
 
 
