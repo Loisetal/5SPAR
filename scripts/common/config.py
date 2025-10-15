@@ -18,7 +18,7 @@ class Config:
     CHECKPOINT_LOCATION = os.getenv("SPARK_CHECKPOINT_LOCATION", "/tmp/checkpoints")
     
     # Processing
-    KEYWORDS = os.getenv("PROCESSING_KEYWORDS", "Spark,Mastodon,Data").split(",")
+    KEYWORDS = os.getenv("PROCESSING_KEYWORDS", "Trump").split(",")
     WINDOW_DURATION = os.getenv("WINDOW_DURATION", "1 minute")
     ACTIVE_USER_THRESHOLD = int(os.getenv("ACTIVE_USER_THRESHOLD", "1"))
     BATCH_SIZE = int(os.getenv("BATCH_SIZE", "30"))

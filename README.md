@@ -23,6 +23,7 @@ docker exec -it spark bash
 
 pip install pyspark
 pip install Mastodon.py confluent-kafka python-dotenv
+pip install -U kafka-python==2.0.2
 
 python mastodon_producer.py
 ```
@@ -41,6 +42,11 @@ docker exec -it spark bash
 
 spark-submit   --conf "spark.driver.extraJavaOptions=--add-opens=java.base/javax.security.auth=ALL-UNNAMED"   --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.postgresql:postgresql:42.6.0   /home/jovyan/scripts/mastodon_historical_batch.py
 ```
+
+
+
+
+
 
 ## Tests 
 ### Test connexion mastodon
