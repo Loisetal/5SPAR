@@ -159,5 +159,5 @@ else:
 out = pred_hist.select("toot_id","text","sentiments","prob_positive","prob_negative")
 out.write.jdbc(JDBC_URL, TABLE_OUT, mode="append", properties=JDBC_PROPS)
 
-print(f"✅ {out.count()} lignes écrites dans {TABLE_OUT}")
+print(f"{out.count()} lignes écrites dans {TABLE_OUT}")
 spark.stop()
